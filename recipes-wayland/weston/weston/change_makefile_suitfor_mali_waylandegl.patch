@@ -1,0 +1,52 @@
+--- weston-1.6.0/Makefile.am	2014-09-19 17:04:41.000000000 +0800
++++ weston-1.6.0_chg/Makefile.am	2015-07-20 15:23:54.519410200 +0800
+@@ -160,6 +160,8 @@ gl_renderer_la_CFLAGS =				\
+ 	$(COMPOSITOR_CFLAGS)			\
+ 	$(EGL_CFLAGS)				\
+ 	$(GCC_CFLAGS)
++gl_renderer_la_CFLAGS += -DEGL_PLATFORM_FBDEV
++
+ gl_renderer_la_SOURCES =			\
+ 	src/gl-renderer.h			\
+ 	src/gl-renderer.c			\
+@@ -305,6 +307,8 @@ fbdev_backend_la_CFLAGS =			\
+ 	$(FBDEV_COMPOSITOR_CFLAGS)		\
+ 	$(PIXMAN_CFLAGS)			\
+ 	$(GCC_CFLAGS)
++fbdev_backend_la_CFLAGS += -DEGL_PLATFORM_FBDEV
++
+ fbdev_backend_la_SOURCES =			\
+ 	src/compositor-fbdev.c			\
+ 	$(INPUT_BACKEND_SOURCES)
+@@ -429,6 +433,7 @@ nodist_weston_simple_egl_SOURCES =		\
+ 	protocol/xdg-shell-protocol.c		\
+ 	protocol/xdg-shell-client-protocol.h
+ weston_simple_egl_CFLAGS = $(AM_CFLAGS) $(SIMPLE_EGL_CLIENT_CFLAGS)
++weston_simple_egl_CFLAGS += -DEGL_PLATFORM_WAYLAND
+ weston_simple_egl_LDADD = $(SIMPLE_EGL_CLIENT_LIBS) -lm
+ endif
+ 
+@@ -548,6 +553,7 @@ weston_subsurfaces_CFLAGS =			\
+ 	$(AM_CFLAGS)				\
+ 	$(SIMPLE_EGL_CLIENT_CFLAGS)		\
+ 	$(CLIENT_CFLAGS)
++weston_subsurfaces_CFLAGS += -DEGL_PLATFORM_WAYLAND
+ weston_subsurfaces_LDADD = libtoytoolkit.la $(SIMPLE_EGL_CLIENT_LIBS) -lm
+ endif
+ 
+@@ -884,6 +890,7 @@ nodist_weston_test_la_SOURCES =			\
+ 
+ if ENABLE_EGL
+ weston_test_la_CFLAGS += $(EGL_TESTS_CFLAGS)
++weston_test_la_CFLAGS += -DEGL_PLATFORM_WAYLAND
+ weston_test_la_LDFLAGS += $(EGL_TESTS_LIBS)
+ endif
+ 
+@@ -941,6 +948,7 @@ if ENABLE_EGL
+ weston_tests += buffer-count.weston
+ buffer_count_weston_SOURCES = tests/buffer-count-test.c
+ buffer_count_weston_CFLAGS = $(GCC_CFLAGS) $(EGL_TESTS_CFLAGS)
++buffer_count_weston_CFLAGS += -DEGL_PLATFORM_WAYLAND
+ buffer_count_weston_LDADD = libtest-client.la $(EGL_TESTS_LIBS)
+ endif
+ 

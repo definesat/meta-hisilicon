@@ -3,6 +3,7 @@ modprobe hi_mmz
 modprobe hi_common
 modprobe hi_gpio
 modprobe hi_i2c
+mosprobe ump
 modprobe mali
 modprobe hi_pmoc
 modprobe hi_tde

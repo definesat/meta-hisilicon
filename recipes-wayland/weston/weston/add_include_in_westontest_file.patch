@@ -1,0 +1,10 @@
+--- weston-1.6.0/tests/weston-test.c	2014-09-17 21:41:56.000000000 +0800
++++ weston-1.6.0_chg/tests/weston-test.c	2015-05-13 17:29:37.752920900 +0800
+@@ -33,6 +33,7 @@
+ #ifdef ENABLE_EGL
+ #include <EGL/egl.h>
+ #include <EGL/eglext.h>
++#include "../src/weston-egl-ext.h"
+ #endif /* ENABLE_EGL */
+ 
+ struct weston_test {

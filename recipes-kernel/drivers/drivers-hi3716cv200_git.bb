@@ -6,8 +6,10 @@ inherit module
 
 PV = "1.0+gitr${SRCPV}"
 
-SRCREV="ff0bb195973168623d2cced8500c39c4e2538ddb"
-SRC_URI = "git://github.com/hisilicon/x5hd2-drivers.git;protocol=https"
+#SRCREV="ff0bb195973168623d2cced8500c39c4e2538ddb"
+SRCREV="2edf9e392e26b3165db9297a92ada514e573fa30"
+
+SRC_URI = "git://github.com/hisilicon/x5hd2-drivers.git;branch=wayland;protocol=https"
 SRC_URI += "file://drvload"
 
 S = "${WORKDIR}/git"

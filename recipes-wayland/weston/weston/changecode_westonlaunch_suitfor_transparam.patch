@@ -1,0 +1,46 @@
+--- weston-1.6.0/src/weston-launch.c	2014-01-13 22:01:49.000000000 +0800
++++ weston-1.6.0_chg/src/weston-launch.c	2015-07-27 14:08:10.807607255 +0800
+@@ -250,7 +250,7 @@ setup_signals(struct weston_launch *wl)
+ 	ret = sigemptyset(&mask);
+ 	assert(ret == 0);
+ 	sigaddset(&mask, SIGCHLD);
+-	sigaddset(&mask, SIGINT);
++	//sigaddset(&mask, SIGINT);
+ 	sigaddset(&mask, SIGTERM);
+ 	sigaddset(&mask, SIGUSR1);
+ 	sigaddset(&mask, SIGUSR2);
+@@ -578,6 +578,9 @@ setup_session(struct weston_launch *wl)
+ {
+ 	char **env;
+ 	char *term;
++	char *config_dir;
++	char *run_dir;
++
+ 	int i;
+ 
+ 	if (wl->tty != STDIN_FILENO) {
+@@ -588,6 +591,10 @@ setup_session(struct weston_launch *wl)
+ 	}
+ 
+ 	term = getenv("TERM");
++
++	run_dir = getenv("XDG_RUNTIME_DIR");
++	config_dir  = getenv("XDG_CONFIG_HOME");
++
+ 	clearenv();
+ 	if (term)
+ 		setenv("TERM", term, 1);
+@@ -604,6 +611,13 @@ setup_session(struct weston_launch *wl)
+ 		}
+ 		free(env);
+ 	}
++
++	if (run_dir)
++		setenv("XDG_RUNTIME_DIR", run_dir, 1);
++
++	if (config_dir)
++		setenv("XDG_CONFIG_HOME", config_dir, 1);
++
+ }
+ 
+ static void

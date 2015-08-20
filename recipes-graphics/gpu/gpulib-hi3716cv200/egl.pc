@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=/usr/lib
+includedir=/usr/include
+
+Name: egl
+Description: mali EGL library
+Requires.private: 
+Version: 9.2.5
+Libs: -L${libdir} -lEGL
+Libs.private: 
+Cflags: -I${includedir}

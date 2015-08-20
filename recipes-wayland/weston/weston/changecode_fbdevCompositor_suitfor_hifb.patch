@@ -1,0 +1,185 @@
+--- weston-1.6.0/src/compositor-fbdev.c	2014-09-16 17:47:08.000000000 +0800
++++ weston-1.6.0_chg/src/compositor-fbdev.c	2015-07-27 14:05:38.459439064 +0800
+@@ -38,6 +38,7 @@
+ #include <linux/input.h>
+ 
+ #include <libudev.h>
++#include <assert.h>
+ 
+ #include "compositor.h"
+ #include "launcher-util.h"
+@@ -45,6 +46,8 @@
+ #include "udev-input.h"
+ #include "gl-renderer.h"
+ 
++#include "EGL/fbdev_window.h"
++
+ struct fbdev_compositor {
+ 	struct weston_compositor base;
+ 	uint32_t prev_state;
+@@ -321,9 +324,14 @@ calculate_refresh_rate(struct fb_var_scr
+ 		uint64_t refresh_rate;
+ 
+ 		refresh_rate = 1000000000000000LLU / quot;
++
+ 		if (refresh_rate > 200000)
+ 			refresh_rate = 200000; /* cap at 200 Hz */
+ 
++		if (refresh_rate < 50 * 1000)
++			refresh_rate = 60 * 1000; 
++
++
+ 		return refresh_rate;
+ 	}
+ 
+@@ -343,6 +351,8 @@ fbdev_query_screen_info(struct fbdev_out
+ 		return -1;
+ 	}
+ 
++	assert(varinfo.yres_virtual == 2 * varinfo.yres);
++
+ 	/* Store the pertinent data. */
+ 	info->x_resolution = varinfo.xres;
+ 	info->y_resolution = varinfo.yres;
+@@ -376,6 +386,8 @@ fbdev_set_screen_info(struct fbdev_outpu
+ 		return -1;
+ 	}
+ 
++	assert(varinfo.yres_virtual == 2 * varinfo.yres);
++
+ 	/* Update the information. */
+ 	varinfo.xres = info->x_resolution;
+ 	varinfo.yres = info->y_resolution;
+@@ -496,6 +508,53 @@ fbdev_frame_buffer_destroy(struct fbdev_
+ static void fbdev_output_destroy(struct weston_output *base);
+ static void fbdev_output_disable(struct weston_output *base);
+ 
++
++static int fbNativeFd = -1;
++static fbdev_window *fbNativeWin = NULL;
++static void hifb_init()
++{
++    struct fb_var_screeninfo vinfo;
++    fbNativeFd = open("/dev/fb0", O_RDWR, 0);
++
++    if(ioctl(fbNativeFd, FBIOGET_VSCREENINFO, &vinfo) < 0){
++        weston_log("Unable to get mode!, err=0x%x\n", errno);
++		close(fbNativeFd);
++		return;
++	}
++
++    vinfo.bits_per_pixel   = 32;
++    vinfo.red.length       = 8;
++    vinfo.green.length     = 8;
++    vinfo.blue.length      = 8;
++    vinfo.transp.length    = 8;
++
++    vinfo.blue.offset      = 0;
++    vinfo.green.offset     = 8;
++    vinfo.red.offset       = 16;
++    vinfo.transp.offset    = 24;
++
++    vinfo.yres_virtual    = 2 * vinfo.yres;
++
++	if (ioctl(fbNativeFd, FBIOPUT_VSCREENINFO, &vinfo) < 0)
++		weston_log("Unable to set double buffer mode!, err=0x%x\n", errno);
++
++    //close(fbNativeFd);
++    return;
++}
++
++
++static void hifb_deInit()
++{
++	if(fbNativeFd >= 0) {
++		close(fbNativeFd);
++		fbNativeFd = -1;
++	}
++	return;
++}
++
++
++
++
+ static int
+ fbdev_output_create(struct fbdev_compositor *compositor,
+                     const char *device)
+@@ -627,6 +686,30 @@ fbdev_output_create(struct fbdev_composi
+ 			goto out_shadow_surface;
+ 	} else {
+ 		setenv("HYBRIS_EGLPLATFORM", "wayland", 1);
++
++#if 1
++		if(fbNativeWin == NULL) { 
++			fbNativeWin = (fbdev_window *)malloc( sizeof( fbdev_window ) );
++			if(fbNativeWin == NULL){
++				weston_log("gl_renderer_output_create alloc native window failed.\n");
++				goto out_shadow_surface;
++			}
++			fbNativeWin->width = output->base.current_mode->width;
++			fbNativeWin->height = output->base.current_mode->height;
++			weston_log("fbNativeWin->width=%d, fbNativeWin->height=%d \n", fbNativeWin->width,fbNativeWin->height );
++		}
++
++		if (gl_renderer->output_create(&output->base,
++								       (EGLNativeWindowType)fbNativeWin,
++				       				   gl_renderer->opaque_attribs,
++				       				   NULL) < 0) {
++			free(fbNativeWin);
++			weston_log("gl_renderer_output_create failed.\n");
++			goto out_shadow_surface;
++		}
++		weston_log("gl_renderer_output_create ok.\n");
++#else
++
+ 		if (gl_renderer->output_create(&output->base,
+ 					       (EGLNativeWindowType)NULL,
+ 					       gl_renderer->opaque_attribs,
+@@ -634,6 +717,8 @@ fbdev_output_create(struct fbdev_composi
+ 			weston_log("gl_renderer_output_create failed.\n");
+ 			goto out_shadow_surface;
+ 		}
++#endif
++	
+ 	}
+ 
+ 
+@@ -691,6 +776,10 @@ fbdev_output_destroy(struct weston_outpu
+ 		}
+ 	} else {
+ 		gl_renderer->output_destroy(base);
++		if(fbNativeWin)	{	
++			free(fbNativeWin);
++			fbNativeWin = NULL;
++		}
+ 	}
+ 
+ 	/* Remove the output. */
+@@ -801,7 +890,7 @@ fbdev_compositor_destroy(struct weston_c
+ 
+ 	/* Destroy the output. */
+ 	weston_compositor_shutdown(&compositor->base);
+-
++	hifb_deInit();
+ 	/* Chain up. */
+ 	weston_launcher_destroy(compositor->base.launcher);
+ 
+@@ -912,6 +1001,9 @@ fbdev_compositor_create(struct wl_displa
+ 		                                  MODIFIER_CTRL | MODIFIER_ALT,
+ 		                                  switch_vt_binding,
+ 		                                  compositor);
++
++	hifb_init();
++
+ 	if (compositor->use_pixman) {
+ 		if (pixman_renderer_init(&compositor->base) < 0)
+ 			goto out_launcher;
+@@ -965,7 +1057,7 @@ backend_init(struct wl_display *display,
+ 	struct fbdev_parameters param = {
+ 		.tty = 0, /* default to current tty */
+ 		.device = "/dev/fb0", /* default frame buffer */
+-		.use_gl = 0,
++		.use_gl = 1,
+ 	};
+ 
+ 	const struct weston_option fbdev_options[] = {
