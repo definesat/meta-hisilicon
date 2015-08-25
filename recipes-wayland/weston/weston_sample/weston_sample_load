@@ -19,4 +19,5 @@ export XDG_CONFIG_HOME=/usr/share/weston_sample
 #weston-launch -uroot -v > /abc/log.txt 2>&1
 weston-launch -uroot -v &
 
-
+/usr/share/qt5/examples/opengl/textures/textures -platform wayland-egl &
+/usr/share/qt5/examples/gui/openglwindow/openglwindow -platform wayland-egl &
