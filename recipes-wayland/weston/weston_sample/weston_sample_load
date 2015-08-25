@@ -1,0 +1,22 @@
+cat /dev/fb0 > /dev/null
+
+#ifconfig eth1 up
+#udhcpc -i eth1
+
+export XDG_RUNTIME_DIR=/tmp/weston
+mkdir -p $XDG_RUNTIME_DIR
+chmod 0700 $XDG_RUNTIME_DIR
+export XDG_CONFIG_HOME=/usr/share/weston_sample
+
+#export EGL_LOG_LEVEL=debug
+#export LIBGL_DEBUG=verbose
+
+#export WAYLAND_DEBUG=1
+
+#export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+#export QT_WAYLAND_USE_XDG_SHELL=1
+
+#weston-launch -uroot -v > /abc/log.txt 2>&1
+weston-launch -uroot -v &
+
+

@@ -5,6 +5,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/qtwayland:"
 #    "
 
 PACKAGES += "${PN}-plugins"
+RDEPENDS_${PN} += "qtwayland-plugins"
 
 #DEPENDS += " wayland-egl"
 LDFLAGS += " -lwayland-egl"
